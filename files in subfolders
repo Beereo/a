@@ -1,61 +1,33 @@
-Sub ListeUnterordnerInhalte()
-    Dim Dateipfad As String
-    Dim Ordner As Object
-    Dim Unterordner As Object
-    Dim Datei As Object
-    Dim AktuellesBlatt As Worksheet
-    Dim NeueTabelle As Worksheet
-    Dim LetzteZeile As Long
-    Dim OrdnerName As String
+Sub ListFolderContents()
+    Dim fso As New Scripting.FileSystemObject
+    Dim folderPath As String
+    Dim folder As Scripting.Folder
+    Dim subfolder As Scripting.Folder
+    Dim file As Scripting.File
+    Dim tbl As ListObject
+    Dim row As ListRow
+    Dim col As Integer
     
-    ' Dateipfad aus Zelle A1 des aktiven Arbeitsblatts lesen
-    Dateipfad = ActiveSheet.Range("A1").Value
+    folderPath = ActiveSheet.Range("A1").Value
+    Set folder = fso.GetFolder(folderPath)
     
-    ' Aktives Arbeitsblatt speichern
-    Set AktuellesBlatt = ActiveSheet
-    
-    ' Schleife über die sechs Unterordner
-    For Each Ordner In CreateObject("Scripting.FileSystemObject").GetFolder(Dateipfad).Subfolders
-        ' Unterordnername ermitteln
-        OrdnerName = Ordner.Name
+    For Each subfolder In folder.SubFolders
+        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
+        tbl.Name = subfolder.Name
+        tbl.ListColumns.Add
+        tbl.ListColumns(1).Name = "Filename"
+        tbl.ListColumns.Add
+        tbl.ListColumns(2).Name = "Created Date"
+        tbl.ListColumns.Add
+        tbl.ListColumns(3).Name = "Last Modified Date"
         
-        ' Neue Tabelle erstellen
-        Set NeueTabelle = Worksheets.Add(After:=Worksheets(Worksheets.Count))
-        NeueTabelle.Name = OrdnerName
-        
-        ' Überschrift in der neuen Tabelle einfügen
-        NeueTabelle.Range("A1").Value = "Dateiname"
-        NeueTabelle.Range("B1").Value = "Erstellungsdatum"
-        NeueTabelle.Range("C1").Value = "Letzte Änderung"
-        
-        ' Zeilennummer initialisieren
-        LetzteZeile = 2
-        
-        ' Schleife über die Dateien im aktuellen Unterordner
-        For Each Datei In Ordner.Files
-            ' Dateiname in Spalte A einfügen
-            NeueTabelle.Range("A" & LetzteZeile).Value = Datei.Name
-            
-            ' Erstellungsdatum in Spalte B einfügen
-            NeueTabelle.Range("B" & LetzteZeile).Value = Datei.DateCreated
-            
-            ' Letzte Änderung in Spalte C einfügen
-            NeueTabelle.Range("C" & LetzteZeile).Value = Datei.DateLastModified
-            
-            ' Zeilennummer erhöhen
-            LetzteZeile = LetzteZeile + 1
-        Next Datei
-        
-        ' Tabelle formatieren
-        With NeueTabelle
-            .Columns("A:C").AutoFit
-            .Range("A1:C1").Font.Bold = True
-        End With
-    Next Ordner
-    
-    ' Aktives Arbeitsblatt wiederherstellen
-    AktuellesBlatt.Activate
+        For Each file In subfolder.Files
+            Set row = tbl.ListRows.Add
+            row.Range(1).Value = file.Name
+            row.Range(2).Value = file.DateCreated
+            row.Range(3).Value = file.DateLastModified
+        Next file
+    Next subfolder
 End Sub
-
 
 
