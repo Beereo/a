@@ -1,0 +1,90 @@
+Sub ListFolders()
+
+    'Variablendeklaration
+    Dim objFSO As Object
+    Dim objFolder As Object
+    Dim objSubfolder As Object
+    Dim i As Integer
+    Dim j As Integer
+    Dim k As Integer
+    Dim l As Integer
+    Dim lngCounter As Long
+    Dim strFolderPath As String
+    Dim strOutput As String
+    
+    'Dateipfad des Ordners in der ersten Zelle des aktiven Arbeitsblatts speichern
+    strFolderPath = ActiveSheet.Cells(1, 1).Value
+    
+    'Überprüfen, ob der Ordner existiert
+    If Dir(strFolderPath, vbDirectory) = "" Then
+        MsgBox "Der Ordner existiert nicht."
+        Exit Sub
+    End If
+    
+    'Erstellen eines Objekts für das Dateisystem-Objekt
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    
+    'Erstellen eines Objekts für den Ordner
+    Set objFolder = objFSO.GetFolder(strFolderPath)
+    
+    'Header-Zeilen für die Ordnerstruktur hinzufügen
+    ActiveSheet.Cells(3, 1).Value = "Ordnerstruktur von " & strFolderPath
+    ActiveSheet.Cells(4, 1).Value = "Ordnerpfad"
+    ActiveSheet.Cells(4, 2).Value = "Ordnername"
+    ActiveSheet.Cells(4, 3).Value = "Erstellungsdatum"
+    ActiveSheet.Cells(4, 4).Value = "Letzte Änderung"
+    
+    'Initialisieren des Zählers für die Ausgabezeile
+    lngCounter = 5
+    
+    'Schleife durch alle Unterordner des Ordners
+    For Each objSubfolder In objFolder.Subfolders
+    
+        'Ordnerpfad und -name ausgeben
+        ActiveSheet.Cells(lngCounter, 1).Value = objSubfolder.Path
+        ActiveSheet.Cells(lngCounter, 2).Value = objSubfolder.Name
+        
+        'Erstellungsdatum und letzte Änderung ausgeben
+        ActiveSheet.Cells(lngCounter, 3).Value = objSubfolder.DateCreated
+        ActiveSheet.Cells(lngCounter, 4).Value = objSubfolder.DateLastModified
+        
+        'Zähler erhöhen
+        lngCounter = lngCounter + 1
+        
+        'Unterordner des aktuellen Ordners ausgeben
+        ListSubfolders objSubfolder, lngCounter
+        
+    Next objSubfolder
+    
+    'Meldung ausgeben
+    MsgBox "Die Ordnerstruktur wurde erfolgreich hinzugefügt."
+    
+End Sub
+
+Sub ListSubfolders(ByVal objFolder As Object, ByRef lngCounter As Long)
+
+    'Variablendeklaration
+    Dim objSubfolder As Object
+    
+    'Schleife durch alle Unterordner des Ordners
+    For Each objSubfolder In objFolder.Subfolders
+    
+        'Ordnerpfad und -name ausgeben
+        ActiveSheet.Cells(lngCounter, 1).Value = objSubfolder.Path
+        ActiveSheet.Cells(lngCounter, 2).Value = objSubfolder.Name
+        
+        'Erstellungsdatum und letzte Änderung ausgeben
+        ActiveSheet.Cells(lngCounter, 3).Value = objSubfolder.DateCreated
+        ActiveSheet.Cells(lngCounter, 4).Value
+        
+        'Letzte Änderung ausgeben
+        ActiveSheet.Cells(lngCounter, 4).Value = objSubfolder.DateLastModified
+        
+        'Zähler erhöhen
+        lngCounter = lngCounter + 1
+    
+        'Unterordner des aktuellen Ordners ausgeben
+        ListSubfolders objSubfolder, lngCounter
+    
+  Next objSubfolder
+End Sub
