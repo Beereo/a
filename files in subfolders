@@ -1,63 +1,60 @@
-Sub ListFilesInFolders()
-    Dim folderPath As String
-    Dim folderCell As Range
-    Dim folderRange As Range
-    Dim folder As Object
-    Dim subfolder As Object
-    Dim file As Object
-    Dim row As Long
+Sub ListeUnterordnerInhalte()
+    Dim Dateipfad As String
+    Dim Ordner As Object
+    Dim Unterordner As Object
+    Dim Datei As Object
+    Dim AktuellesBlatt As Worksheet
+    Dim NeueTabelle As Worksheet
+    Dim LetzteZeile As Long
+    Dim OrdnerName As String
     
-    ' Setze den Dateipfad aus der ersten Zelle des Arbeitsblatts
-    folderPath = ActiveSheet.Range("A1").Value
+    ' Dateipfad aus Zelle A1 des aktiven Arbeitsblatts lesen
+    Dateipfad = ActiveSheet.Range("A1").Value
     
-    ' Überprüfe, ob der Dateipfad vorhanden ist
-    If Dir(folderPath, vbDirectory) = "" Then
-        MsgBox "Ungültiger Dateipfad."
-        Exit Sub
-    End If
+    ' Aktives Arbeitsblatt speichern
+    Set AktuellesBlatt = ActiveSheet
     
-    ' Lösche den Inhalt des Arbeitsblatts außerhalb der ersten Zelle
-    ActiveSheet.UsedRange.Offset(1).Clear
-    
-    ' Setze die Überschriften für die Spalten
-    ActiveSheet.Range("A2:E2").Value = Array("Ordner", "Dateiname", "Dateityp", "Erstellungsdatum", "Änderungsdatum")
-    
-    ' Setze die Zelle für den Dateipfad
-    Set folderCell = ActiveSheet.Range("A1")
-    
-    ' Setze den Bereich für die Ordner
-    Set folderRange = ActiveSheet.Range("A3")
-    
-    ' Beginne in der vierten Zeile
-    row = 4
-    
-    ' Schleife durch die Unterordner im Dateipfad
-    For Each folder In CreateObject("Scripting.FileSystemObject").GetFolder(folderPath).Subfolders
-        ' Schleife durch die Dateien im aktuellen Unterordner
-        For Each file In folder.Files
-            ' Schreibe den Ordnernamen und die Dateiinformationen in die entsprechenden Spalten
-            ActiveSheet.Cells(row, 1).Value = folder.Name
-            ActiveSheet.Cells(row, 2).Value = file.Name
-            ActiveSheet.Cells(row, 3).Value = file.Type
-            ActiveSheet.Cells(row, 4).Value = file.DateCreated
-            ActiveSheet.Cells(row, 5).Value = file.DateLastModified
-            row = row + 1
-        Next file
+    ' Schleife über die sechs Unterordner
+    For Each Ordner In CreateObject("Scripting.FileSystemObject").GetFolder(Dateipfad).Subfolders
+        ' Unterordnername ermitteln
+        OrdnerName = Ordner.Name
         
-        ' Schreibe den Ordnernamen in die Zelle und verschiebe den Bereich um eine Zeile nach unten
-        folderRange.Value = folder.Name
-        Set folderRange = folderRange.Offset(1)
+        ' Neue Tabelle erstellen
+        Set NeueTabelle = Worksheets.Add(After:=Worksheets(Worksheets.Count))
+        NeueTabelle.Name = OrdnerName
         
-        ' Beende die Schleife, wenn die letzte Zeile des Arbeitsblatts erreicht wurde
-        If folderRange.Row > ActiveSheet.Rows.Count Then
-            Exit For
-        End If
-    Next folder
+        ' Überschrift in der neuen Tabelle einfügen
+        NeueTabelle.Range("A1").Value = "Dateiname"
+        NeueTabelle.Range("B1").Value = "Erstellungsdatum"
+        NeueTabelle.Range("C1").Value = "Letzte Änderung"
+        
+        ' Zeilennummer initialisieren
+        LetzteZeile = 2
+        
+        ' Schleife über die Dateien im aktuellen Unterordner
+        For Each Datei In Ordner.Files
+            ' Dateiname in Spalte A einfügen
+            NeueTabelle.Range("A" & LetzteZeile).Value = Datei.Name
+            
+            ' Erstellungsdatum in Spalte B einfügen
+            NeueTabelle.Range("B" & LetzteZeile).Value = Datei.DateCreated
+            
+            ' Letzte Änderung in Spalte C einfügen
+            NeueTabelle.Range("C" & LetzteZeile).Value = Datei.DateLastModified
+            
+            ' Zeilennummer erhöhen
+            LetzteZeile = LetzteZeile + 1
+        Next Datei
+        
+        ' Tabelle formatieren
+        With NeueTabelle
+            .Columns("A:C").AutoFit
+            .Range("A1:C1").Font.Bold = True
+        End With
+    Next Ordner
     
-    ' Autofit Spaltenbreite
-    ActiveSheet.UsedRange.Columns.AutoFit
-    
-    MsgBox "Die Dateien wurden erfolgreich aufgelistet."
+    ' Aktives Arbeitsblatt wiederherstellen
+    AktuellesBlatt.Activate
 End Sub
 
 
