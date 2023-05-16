@@ -16,25 +16,25 @@ Sub ListFolderContents()
         tbl.Name = subfolder.Name
         tbl.ListColumns.Add
         tbl.ListColumns(1).Name = "Ordnername"
+        tbl.Range(1, 1).Value = subfolder.Name
+        tbl.Range(1, 1).HorizontalAlignment = xlCenter
         tbl.ListColumns.Add
         tbl.ListColumns(2).Name = "Filename"
         tbl.ListColumns.Add
-        tbl.ListColumns(3).Name = "Created Date"
+        tbl.ListColumns(3).Name = "Erstellt am"
         tbl.ListColumns.Add
-        tbl.ListColumns(4).Name = "Last Modified Date"
+        tbl.ListColumns(4).Name = "Zuletzt geändert am"
         
-        If tbl.ListRows.Count > 0 And tbl.ListColumns.Count > 0 Then
-            tbl.Range(1, 1).Resize(1, tbl.ListColumns.Count).Merge
-            tbl.Range(1, 1).Value = subfolder.Name
+        If subfolder.Files.Count > 0 Then
+            For Each file In subfolder.Files
+                Set row = tbl.ListRows.Add
+                row.Range(1).Value = file.Name
+                row.Range(2).Value = file.DateCreated
+                row.Range(3).Value = file.DateLastModified
+            Next file
+            tbl.Range(1, 1).Merge tbl.Range(1, 2)
         End If
-        
-        For Each file In subfolder.Files
-            Set row = tbl.ListRows.Add
-            row.Range(1).Value = ""
-            row.Range(2).Value = file.Name
-            row.Range(3).Value = file.DateCreated
-            row.Range(4).Value = file.DateLastModified
-        Next file
     Next subfolder
 End Sub
+
 
