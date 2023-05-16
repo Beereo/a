@@ -1,31 +1,57 @@
 Sub ListFolderContents()
-    Dim fso As New Scripting.FileSystemObject
-    Dim folderPath As String
-    Dim folder As Scripting.Folder
-    Dim subfolder As Scripting.Folder
-    Dim file As Scripting.File
-    Dim tbl As ListObject
-    Dim row As ListRow
-    Dim col As Integer
+Dim fso As New Scripting.FileSystemObject
+Dim folderPath As String
+Dim folder As Scripting.Folder
+Dim subfolder As Scripting.Folder
+Dim file As Scripting.File
+Dim tbl As ListObject
+Dim row As ListRow
+Dim col As Integer
+
+folderPath = ActiveSheet.Range("A1").Value
+Set folder = fso.GetFolder(folderPath)
+
+For Each subfolder In folder.SubFolders
+    Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
+    tbl.Name = subfolder.Name
     
-    folderPath = ActiveSheet.Range("A1").Value
-    Set folder = fso.GetFolder(folderPath)
+    ' Insert new column for folder name
+    tbl.ListColumns.Add
+    tbl.ListColumns(1).Name = "Folder Name"
+    tbl.Range(1, 1).Merge ' Merge the folder name cells
     
-    For Each subfolder In folder.SubFolders
-        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
-        tbl.Name = subfolder.Name
-        tbl.ListColumns.Add
-        tbl.ListColumns(1).Name = "Filename"
-        tbl.ListColumns.Add
-        tbl.ListColumns(2).Name = "Created Date"
-        tbl.ListColumns.Add
-        tbl.ListColumns(3).Name = "Last Modified Date"
-        
-        For Each file In subfolder.Files
+    ' Add column for filename and date info
+    tbl.ListColumns.Add
+    tbl.ListColumns(2).Name = "Filename"
+    tbl.ListColumns.Add
+    tbl.ListColumns(3).Name = "Created Date"
+    tbl.ListColumns.Add
+    tbl.ListColumns(4).Name = "Last Modified Date"
+    
+    For Each file In subfolder.Files
+        ' Add folder name to first column
+        If tbl.ListRows.Count = 0 Then
             Set row = tbl.ListRows.Add
-            row.Range(1).Value = file.Name
-            row.Range(2).Value = file.DateCreated
-            row.Range(3).Value = file.DateLastModified
-        Next file
-    Next subfolder
+            row.Range(1).Value = subfolder.Name
+        ElseIf tbl.ListRows(tbl.ListRows.Count).Range(1).Value <> subfolder.Name Then
+            ' Merge cells for folder name if there are multiple files in folder
+            tbl.ListRows(tbl.ListRows.Count).Range(1, 1).Merge
+            Set row = tbl.ListRows.Add
+            row.Range(1).Value = subfolder.Name
+        Else
+            Set row = tbl.ListRows.Add
+        End If
+        
+        ' Add file info to table
+        row.Range(2).Value = file.Name
+        row.Range(3).Value = file.DateCreated
+        row.Range(4).Value = file.DateLastModified
+    Next file
+    
+    ' Merge cells for folder name if it is the last folder
+    If subfolder Is folder.SubFolders(folder.SubFolders.Count) And tbl.ListRows.Count > 0 Then
+        tbl.ListRows(tbl.ListRows.Count).Range(1, 1).Merge
+    End If
+Next subfolder
+
 End Sub
