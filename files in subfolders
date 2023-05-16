@@ -20,7 +20,7 @@ Sub ListFilesInFolders()
     ActiveSheet.UsedRange.Offset(1).Clear
     
     ' Setze die Überschriften für die Spalten
-    ActiveSheet.Range("A2:D2").Value = Array("Ordner", "Dateiname", "Dateityp", "Erstellungsdatum", "Änderungsdatum")
+    ActiveSheet.Range("A2:E2").Value = Array("Ordner", "Dateiname", "Dateityp", "Erstellungsdatum", "Änderungsdatum")
     
     ' Setze die Zelle für den Dateipfad
     Set folderCell = ActiveSheet.Range("A1")
@@ -43,6 +43,7 @@ Sub ListFilesInFolders()
             ActiveSheet.Cells(row, 3).Value = file.Type
             ActiveSheet.Cells(row, 4).Value = file.DateCreated
             ActiveSheet.Cells(row, 5).Value = file.DateLastModified
+            ActiveSheet.Cells(row, 1).Value = folder.Name ' Neue Spalte für Ordner hinzugefügt
             row = row + 1
         Next file
         
