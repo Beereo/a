@@ -1,0 +1,43 @@
+Sub ListFolderContents()
+    Dim fso As New Scripting.FileSystemObject
+    Dim folderPath As String
+    Dim folder As Scripting.folder
+    Dim subfolder As Scripting.folder
+    Dim file As Scripting.file
+    Dim tbl As ListObject
+    Dim row As ListRow
+    Dim col As Integer
+    
+    folderPath = ActiveSheet.Range("A1").Value
+    Set folder = fso.GetFolder(folderPath)
+    
+    For Each subfolder In folder.Subfolders
+        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
+        tbl.Name = subfolder.Name
+        tbl.ListColumns.Add
+        tbl.ListColumns(1).Name = "Filename"
+        tbl.ListColumns.Add
+        tbl.ListColumns(2).Name = "Created Date"
+        tbl.ListColumns.Add
+        tbl.ListColumns(3).Name = "Last Modified Date"
+        tbl.ListColumns(4).Name = "File Path"
+        
+        For Each file In subfolder.Files
+            If InStr(1, file.Name, "~") = 0 And InStr(1, file.Name, "$") = 0 Then
+                Set row = tbl.ListRows.Add
+                row.Range(1).Value = file.Name
+                row.Range(2).Value = file.DateCreated
+                row.Range(3).Value = file.DateLastModified
+                ' set hyperlink to open file
+                row.Range(1).Hyperlinks.Add Anchor:=row.Range(1), Address:=file.Path, TextToDisplay:=file.Name
+                ' underline and color filename
+                row.Range(1).Font.Underline = xlUnderlineStyleSingle
+                row.Range(1).Font.ColorIndex = 5 ' change color as desired
+            End If
+
+        Next file
+    Next subfolder
+    
+CenterTableContents
+
+End Sub
