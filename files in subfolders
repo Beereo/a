@@ -23,15 +23,11 @@ Sub ListFilesInFolders()
         Dim row As Long
         row = 2 ' erste Dateneinträge beginnen in der zweiten Zeile
         For Each file In SubFolder.Files
-            If Left(file.Path, Len(SubFolder.Path)) = SubFolder.Path Then
-                ' Datei befindet sich im aktuellen Unterordner
-                ws.Range("A" & row).Value = file.Name
-                ws.Range("B" & row).Value = file.DateCreated
-                ws.Range("C" & row).Value = file.DateLastModified
-                row = row + 1
-            End If
+            ws.Range("A" & row).Value = file.Name
+            ws.Range("B" & row).Value = file.DateCreated
+            ws.Range("C" & row).Value = file.DateLastModified
+            row = row + 1
         Next file
-
         ' Spalten B und C als Datum formatieren
         Dim lastRow As Long
         lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
