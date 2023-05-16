@@ -7,21 +7,19 @@ Sub UpdateFolderContents()
     Dim tbl As ListObject
     Dim row As ListRow
     Dim col As Integer
-    Dim isNewFile As Boolean
+    Dim filename As String
+    Dim lastModified As Date
     
     folderPath = ActiveSheet.Range("A1").Value
     Set folder = fso.GetFolder(folderPath)
     
     For Each subfolder In folder.SubFolders
-        isNewFile = False ' Flag, um zu überprüfen, ob neue Dateien hinzugefügt wurden
-        
-        On Error Resume Next
+        On Error Resume Next 'ignoriere Fehler, falls Tabelle nicht existiert
         Set tbl = ActiveSheet.ListObjects(subfolder.Name)
         On Error GoTo 0
         
-        ' Überprüfen, ob Tabelle für den Ordner existiert
         If tbl Is Nothing Then
-            ' Tabelle existiert nicht, neue Tabelle hinzufügen
+            'Tabelle existiert noch nicht, füge sie hinzu
             Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
             tbl.Name = subfolder.Name
             tbl.ListColumns.Add
@@ -30,30 +28,41 @@ Sub UpdateFolderContents()
             tbl.ListColumns(2).Name = "Created Date"
             tbl.ListColumns.Add
             tbl.ListColumns(3).Name = "Last Modified Date"
-            isNewFile = True ' Neue Datei(en) vorhanden
         End If
         
-        ' Überprüfen der Dateien im Ordner
         For Each file In subfolder.Files
-            On Error Resume Next
-            Set row = tbl.ListRows(file.Name)
-            On Error GoTo 0
-            
-            If row Is Nothing Then
-                ' Datei existiert nicht in der Tabelle, neue Zeile hinzufügen
-                Set row = tbl.ListRows.Add
-                isNewFile = True ' Neue Datei(en) vorhanden
-            ElseIf row.Range(3).Value <> file.DateLastModified Then
-                ' Änderungsdatum abweicht, Wert aktualisieren
-                isNewFile = True ' Neue Datei(en) vorhanden
-            End If
-            
-            If isNewFile Then
-                ' Zeileninhalt aktualisieren
-                row.Range(1).Value = file.Name
-                row.Range(2).Value = file.DateCreated
-                row.Range(3).Value = file.DateLastModified
+            filename = file.Name
+            If InStr(1, filename, "~") = 0 And InStr(1, filename, "$") = 0 Then 'ignoriere Dateien mit "~" oder "$" im Namen
+                lastModified = file.DateLastModified
+                If lastModified > tbl.ListRows(1).Range(3).Value Or tbl.ListRows.Count = 1 Then
+                    'Datei wurde geändert oder ist neu, füge Zeile hinzu oder aktualisiere bestehende Zeile
+                    Set row = FindRow(tbl, filename)
+                    If row Is Nothing Then
+                        Set row = tbl.ListRows.Add
+                        row.Range(1).Value = filename
+                    End If
+                    row.Range(2).Value = file.DateCreated
+                    row.Range(3).Value = lastModified
+                    row.Range(1).Font.Underline = xlUnderlineStyleSingle 'markiere Dateiname
+                    row.Range(1).Font.ColorIndex = 3 'setze Farbe auf rot
+                    row.Range.EntireRow.HorizontalAlignment = xlCenter 'zentriere Zellen
+                    row.Range.EntireRow.AutoFit 'passe Zeilenhöhe an
+                End If
             End If
         Next file
     Next subfolder
 End Sub
+
+Function FindRow(tbl As ListObject, filename As String) As ListRow
+    Dim row As ListRow
+    
+    For Each row In tbl.ListRows
+        If row.Range(1).Value = filename Then
+            Set FindRow = row
+            Exit Function
+        End If
+    Next row
+    
+    Set FindRow = Nothing
+End Function
+
