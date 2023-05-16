@@ -1,41 +1,57 @@
-Sub ListSubfolders()
+Sub ListFilesInFolders()
+    Dim folderPath As String
+    Dim folderCell As Range
+    Dim folderRange As Range
+    Dim folder As Object
+    Dim subfolder As Object
+    Dim file As Object
+    Dim row As Long
     
-    'Get the file path from the first cell of the active worksheet
-    Dim FilePath As String
-    FilePath = ActiveSheet.Range("A1").Value
+    ' Setze den Dateipfad aus der ersten Zelle des Arbeitsblatts
+    folderPath = ActiveSheet.Range("A1").Value
     
-    'Set the folder path for the six subfolders
-    Dim Subfolders(1 To 6) As String
-    Subfolders(1) = FilePath & "\Subfolder1"
-    Subfolders(2) = FilePath & "\Subfolder2"
-    Subfolders(3) = FilePath & "\Subfolder3"
-    Subfolders(4) = FilePath & "\Subfolder4"
-    Subfolders(5) = FilePath & "\Subfolder5"
-    Subfolders(6) = FilePath & "\Subfolder6"
+    ' Überprüfe, ob der Dateipfad vorhanden ist
+    If Dir(folderPath, vbDirectory) = "" Then
+        MsgBox "Ungültiger Dateipfad."
+        Exit Sub
+    End If
     
-    'Loop through each subfolder and list its contents in the active worksheet
-    Dim i As Integer
-    For i = 1 To 6
-        Dim SubfolderPath As String
-        SubfolderPath = Subfolders(i)
-        
-        Dim objFSO As Object
-        Set objFSO = CreateObject("Scripting.FileSystemObject")
-        
-        Dim objFolder As Object
-        Set objFolder = objFSO.GetFolder(SubfolderPath)
-        
-        Dim objFile As Object
-        For Each objFile In objFolder.Files
-            ActiveSheet.Range("B" & Rows.Count).End(xlUp).Offset(1, 0).Value = objFile.Name
-        Next objFile
-        
-        Dim objSubFolder As Object
-        For Each objSubFolder In objFolder.SubFolders
-            For Each objFile In objSubFolder.Files
-                ActiveSheet.Range("B" & Rows.Count).End(xlUp).Offset(1, 0).Value = objFile.Name
-            Next objFile
-        Next objSubFolder
-    Next i
+    ' Lösche den Inhalt des Arbeitsblatts außerhalb der ersten Zelle
+    ActiveSheet.UsedRange.Offset(1).Clear
     
+    ' Setze die Überschriften für die Spalten
+    ActiveSheet.Range("A2:D2").Value = Array("Ordner", "Dateiname", "Dateityp", "Erstellungsdatum", "Änderungsdatum")
+    
+    ' Setze die Zelle für den Dateipfad
+    Set folderCell = ActiveSheet.Range("A1")
+    
+    ' Setze den Bereich für die Ordner
+    Set folderRange = ActiveSheet.Range("A3")
+    
+    ' Beginne in der vierten Zeile
+    row = 4
+    
+    ' Schleife durch die Unterordner im Dateipfad
+    For Each folder In CreateObject("Scripting.FileSystemObject").GetFolder(folderPath).Subfolders
+        ' Schreibe den Ordnernamen in die Zelle
+        folderRange.Value = folder.Name
+        
+        ' Schleife durch die Dateien im aktuellen Unterordner
+        For Each file In folder.Files
+            ' Schreibe die Dateiinformationen in die entsprechenden Spalten
+            ActiveSheet.Cells(row, 2).Value = file.Name
+            ActiveSheet.Cells(row, 3).Value = file.Type
+            ActiveSheet.Cells(row, 4).Value = file.DateCreated
+            ActiveSheet.Cells(row, 5).Value = file.DateLastModified
+            row = row + 1
+        Next file
+        
+        ' Verschiebe den Bereich für die Ordner um eine Zeile nach unten
+        Set folderRange = folderRange.Offset(1)
+    Next folder
+    
+    ' Autofit Spaltenbreite
+    ActiveSheet.UsedRange.Columns.AutoFit
+    
+    MsgBox "Die Dateien wurden erfolgreich aufgelistet."
 End Sub
