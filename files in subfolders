@@ -33,12 +33,9 @@ Sub ListFilesInFolders()
     
     ' Schleife durch die Unterordner im Dateipfad
     For Each folder In CreateObject("Scripting.FileSystemObject").GetFolder(folderPath).Subfolders
-        ' Schreibe den Ordnernamen in die Zelle
-        folderRange.Value = folder.Name
-        
         ' Schleife durch die Dateien im aktuellen Unterordner
         For Each file In folder.Files
-            ' Schreibe den Dateinamen und die Dateiinformationen in die entsprechenden Spalten
+            ' Schreibe den Ordnernamen und die Dateiinformationen in die entsprechenden Spalten
             ActiveSheet.Cells(row, 1).Value = folder.Name
             ActiveSheet.Cells(row, 2).Value = file.Name
             ActiveSheet.Cells(row, 3).Value = file.Type
@@ -47,7 +44,8 @@ Sub ListFilesInFolders()
             row = row + 1
         Next file
         
-        ' Verschiebe den Bereich für die Ordner um eine Zeile nach unten
+        ' Schreibe den Ordnernamen in die Zelle und verschiebe den Bereich um eine Zeile nach unten
+        folderRange.Value = folder.Name
         Set folderRange = folderRange.Offset(1)
     Next folder
     
