@@ -1,33 +1,45 @@
-Sub ListFolderContents()
-    Dim fso As New Scripting.FileSystemObject
+Sub ListFilesInFolders()
+
+    ' Dateipfad aus der ersten Zelle des Sheets auslesen
     Dim folderPath As String
-    Dim folder As Scripting.Folder
-    Dim subfolder As Scripting.Folder
-    Dim file As Scripting.File
-    Dim tbl As ListObject
-    Dim row As ListRow
-    Dim col As Integer
-    
-    folderPath = ActiveSheet.Range("A1").Value
+    folderPath = Range("A1").Value
+
+    ' Dateisystem-Objekt erstellen
+    Dim fso As New FileSystemObject
+    Dim folder As Folder
     Set folder = fso.GetFolder(folderPath)
-    
-    For Each subfolder In folder.SubFolders
-        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
-        tbl.Name = subfolder.Name
-        tbl.ListColumns.Add
-        tbl.ListColumns(1).Name = "Filename"
-        tbl.ListColumns.Add
-        tbl.ListColumns(2).Name = "Created Date"
-        tbl.ListColumns.Add
-        tbl.ListColumns(3).Name = "Last Modified Date"
-        
-        For Each file In subfolder.Files
-            Set row = tbl.ListRows.Add
-            row.Range(1).Value = file.Name
-            row.Range(2).Value = file.DateCreated
-            row.Range(3).Value = file.DateLastModified
+
+    ' Eine neue Tabelle für jeden Unterordner erstellen
+    Dim ws As Worksheet
+    For Each SubFolder In folder.SubFolders
+        Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        ws.Name = SubFolder.Name
+
+        ' Tabellenkopfzeile erstellen
+        ws.Range("A1:C1").Value = Array("Name", "Erstellt am", "Geändert am")
+
+        ' Dateien in den Unterordner auflisten
+        Dim file As file
+        Dim row As Long
+        row = 2 ' erste Dateneinträge beginnen in der zweiten Zeile
+        For Each file In SubFolder.Files
+            If Left(file.Path, Len(SubFolder.Path)) = SubFolder.Path Then
+                ' Datei befindet sich im aktuellen Unterordner
+                ws.Range("A" & row).Value = file.Name
+                ws.Range("B" & row).Value = file.DateCreated
+                ws.Range("C" & row).Value = file.DateLastModified
+                row = row + 1
+            End If
         Next file
-    Next subfolder
+
+        ' Spalten B und C als Datum formatieren
+        Dim lastRow As Long
+        lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+        With ws.Range("B2:C" & lastRow)
+            .NumberFormat = "dd.mm.yyyy hh:mm:ss"
+        End With
+    Next SubFolder
 End Sub
+
 
 
