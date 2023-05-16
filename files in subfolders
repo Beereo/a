@@ -7,38 +7,45 @@ Sub ListFolderContents()
     Dim tbl As ListObject
     Dim row As ListRow
     Dim col As Integer
-    Dim tblStart As Range
     
     folderPath = ActiveSheet.Range("A1").Value
     Set folder = fso.GetFolder(folderPath)
 
     For Each subfolder In folder.SubFolders
-        ' Add column for folder name before creating table
-        Set tblStart = Range("A" & Rows.Count).End(xlUp).Offset(2)
-        tblStart.EntireColumn.Insert xlShiftToRight
-        tblStart.Value = subfolder.Name
-        ' Merge cells for multiple files in same folder
-        If tblStart.Offset(1).Value = subfolder.Name Then
-            Do While tblStart.Offset(1).Value = subfolder.Name
-                Set tblStart = tblStart.Offset(1)
-            Loop
-            tblStart.Resize(Range(tblStart, tblStart.End(xlDown))).Merge
-        End If
-        ' Create table
-        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, tblStart.Offset(0, 1), , xlYes)
+        On Error Resume Next ' Tabelle löschen, falls sie bereits existiert
+        ActiveSheet.ListObjects(subfolder.Name).Delete
+        On Error GoTo 0
+    
+        ' Spalte mit Ordernamen erstellen
+        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
         tbl.Name = subfolder.Name
+        tbl.HeaderRowRange.Value = "Ordername"
         tbl.ListColumns.Add
         tbl.ListColumns(1).Name = "Filename"
         tbl.ListColumns.Add
         tbl.ListColumns(2).Name = "Created Date"
         tbl.ListColumns.Add
         tbl.ListColumns(3).Name = "Last Modified Date"
+        tbl.Range(1, 1).Resize(, 4).Merge ' Zellen verbinden
     
+        ' Dateien hinzufügen
         For Each file In subfolder.Files
+            Set tbl = ActiveSheet.ListObjects(subfolder.Name)
             Set row = tbl.ListRows.Add
-            row.Range(1).Value = file.Name
-            row.Range(2).Value = file.DateCreated
-            row.Range(3).Value = file.DateLastModified
+            row.Range(2).Value = file.Name
+            row.Range(3).Value = file.DateCreated
+            row.Range(4).Value = file.DateLastModified
         Next file
-    Next subfolder
+    
+        ' Zellen mit mehreren Dateien verbinden
+        Dim lastRow As Long
+        lastRow = tbl.Range.Rows.Count
+        For i = 2 To lastRow
+            If tbl.Range(i, 2) = tbl.Range(i - 1, 2) Then
+                tbl.Range(i - 1, 1).Merge tbl.Range(i, 1)
+            End If
+        Next i
+    
+Next subfolder
+
 End Sub
