@@ -1,0 +1,41 @@
+Sub ListSubfolders()
+    
+    'Get the file path from the first cell of the active worksheet
+    Dim FilePath As String
+    FilePath = ActiveSheet.Range("A1").Value
+    
+    'Set the folder path for the six subfolders
+    Dim Subfolders(1 To 6) As String
+    Subfolders(1) = FilePath & "\Subfolder1"
+    Subfolders(2) = FilePath & "\Subfolder2"
+    Subfolders(3) = FilePath & "\Subfolder3"
+    Subfolders(4) = FilePath & "\Subfolder4"
+    Subfolders(5) = FilePath & "\Subfolder5"
+    Subfolders(6) = FilePath & "\Subfolder6"
+    
+    'Loop through each subfolder and list its contents in the active worksheet
+    Dim i As Integer
+    For i = 1 To 6
+        Dim SubfolderPath As String
+        SubfolderPath = Subfolders(i)
+        
+        Dim objFSO As Object
+        Set objFSO = CreateObject("Scripting.FileSystemObject")
+        
+        Dim objFolder As Object
+        Set objFolder = objFSO.GetFolder(SubfolderPath)
+        
+        Dim objFile As Object
+        For Each objFile In objFolder.Files
+            ActiveSheet.Range("B" & Rows.Count).End(xlUp).Offset(1, 0).Value = objFile.Name
+        Next objFile
+        
+        Dim objSubFolder As Object
+        For Each objSubFolder In objFolder.SubFolders
+            For Each objFile In objSubFolder.Files
+                ActiveSheet.Range("B" & Rows.Count).End(xlUp).Offset(1, 0).Value = objFile.Name
+            Next objFile
+        Next objSubFolder
+    Next i
+    
+End Sub
