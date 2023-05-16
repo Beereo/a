@@ -47,6 +47,11 @@ Sub ListFilesInFolders()
         ' Schreibe den Ordnernamen in die Zelle und verschiebe den Bereich um eine Zeile nach unten
         folderRange.Value = folder.Name
         Set folderRange = folderRange.Offset(1)
+        
+        ' Beende die Schleife, wenn die letzte Zeile des Arbeitsblatts erreicht wurde
+        If folderRange.Row > ActiveSheet.Rows.Count Then
+            Exit For
+        End If
     Next folder
     
     ' Autofit Spaltenbreite
@@ -54,5 +59,6 @@ Sub ListFilesInFolders()
     
     MsgBox "Die Dateien wurden erfolgreich aufgelistet."
 End Sub
+
 
 
