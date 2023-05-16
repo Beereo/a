@@ -1,0 +1,69 @@
+Sub ListFolderContents()
+    Dim fso As New Scripting.FileSystemObject
+    Dim folderPath As String
+    Dim folder As Scripting.Folder
+    Dim subfolder As Scripting.Folder
+    Dim file As Scripting.File
+    Dim tbl As ListObject
+    Dim row As ListRow
+    Dim col As Integer
+    Dim lastModified As Date
+    Dim dict As Object
+    Set dict = CreateObject("Scripting.Dictionary")
+    
+    folderPath = ActiveSheet.Range("A1").Value
+    Set folder = fso.GetFolder(folderPath)
+    
+    ' Check if dictionary already exists and load it
+    If ThisWorkbook.Names("FileModificationDates") Is Nothing Then
+        ThisWorkbook.Names.Add Name:="FileModificationDates", RefersTo:=dict
+    Else
+        Set dict = ThisWorkbook.Names("FileModificationDates").RefersToRange.Value
+    End If
+    
+    For Each subfolder In folder.SubFolders
+        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
+        tbl.Name = subfolder.Name
+        tbl.ListColumns.Add
+        tbl.ListColumns(1).Name = "Filename"
+        tbl.ListColumns.Add
+        tbl.ListColumns(2).Name = "Created Date"
+        tbl.ListColumns.Add
+        tbl.ListColumns(3).Name = "Last Modified Date"
+        tbl.ListColumns.Add
+        tbl.ListColumns(4).Name = "File Path"
+        tbl.ListColumns(4).Hidden = True ' hide file path column
+        tbl.ListColumns.Add
+        tbl.ListColumns(5).Name = "Status"
+        
+        ' Check if folder already exists in dictionary and load its last modified date
+        If dict.Exists(subfolder.Path) Then
+            lastModified = dict(subfolder.Path)
+        Else
+            lastModified = #1/1/1980# ' set default last modified date
+        End If
+        
+        For Each file In subfolder.Files
+            ' Check if file name contains invalid characters
+            If InStr(1, file.Name, "~") = 0 And InStr(1, file.Name, "$") = 0 Then
+                ' Check if file was modified or created after last modified date
+                If file.DateLastModified > lastModified Or file.DateCreated > lastModified Then
+                    Set row = tbl.ListRows.Add
+                    row.Range(1).Value = file.Name
+                    row.Range(2).Value = file.DateCreated
+                    row.Range(3).Value = file.DateLastModified
+                    row.Range(4).Value = file.Path
+                    row.Range(5).Value = "New or updated"
+                    ' Add or update last modified date in dictionary
+                    If dict.Exists(subfolder.Path) Then
+                        dict(subfolder.Path) = file.DateLastModified
+                    Else
+                        dict.Add subfolder.Path, file.DateLastModified
+                    End If
+                End If
+            End If
+        Next file
+    Next subfolder
+    
+    ' Update file modification dates in named range
+    ThisWorkbook.Names("FileModificationDates").RefersToRange.Value = dict
