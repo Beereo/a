@@ -22,6 +22,7 @@ Sub ListFolderContents()
         tbl.ListColumns(3).Name = "Created Date"
         tbl.ListColumns.Add
         tbl.ListColumns(4).Name = "Last Modified Date"
+        tbl.Range(1, 1).Merge ' Verbinden der Zellen für den Ordnername
         
         For Each file In subfolder.Files
             Set row = tbl.ListRows.Add
