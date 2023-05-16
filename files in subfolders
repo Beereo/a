@@ -8,24 +8,36 @@ Sub ListFolderContents()
     Dim row As ListRow
     Dim col As Integer
     
-    folderPath = ActiveSheet.Range("A1").Value
-    Set folder = fso.GetFolder(folderPath)
+folderPath = ActiveSheet.Range("A1").Value
+Set folder = fso.GetFolder(folderPath)
+
+For Each subfolder In folder.SubFolders
+    Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
+    tbl.Name = subfolder.Name
+    tbl.ListColumns.Add
+    tbl.ListColumns(1).Name = "Folder Name"
+    tbl.ListColumns.Add
+    tbl.ListColumns(2).Name = "Filename"
+    tbl.ListColumns.Add
+    tbl.ListColumns(3).Name = "Created Date"
+    tbl.ListColumns.Add
+    tbl.ListColumns(4).Name = "Last Modified Date"
+    tbl.Range(1, 1).Merge ' Verbinden der Zellen für den Ordnername
     
-    For Each subfolder In folder.SubFolders
-        Set tbl = ActiveSheet.ListObjects.Add(xlSrcRange, Range("A" & Rows.Count).End(xlUp).Offset(2), , xlYes)
-        tbl.Name = subfolder.Name
-        tbl.ListColumns.Add
-        tbl.ListColumns(1).Name = "Filename"
-        tbl.ListColumns.Add
-        tbl.ListColumns(2).Name = "Created Date"
-        tbl.ListColumns.Add
-        tbl.ListColumns(3).Name = "Last Modified Date"
-        
-        For Each file In subfolder.Files
-            Set row = tbl.ListRows.Add
-            row.Range(1).Value = file.Name
-            row.Range(2).Value = file.DateCreated
-            row.Range(3).Value = file.DateLastModified
-        Next file
-    Next subfolder
+    Set row = tbl.ListRows.Add ' Hinzufügen einer leeren Zeile, falls keine Dateien vorhanden sind
+    row.Range(1).Value = subfolder.Name
+    
+    For Each file In subfolder.Files
+        Set row = tbl.ListRows.Add
+        row.Range(1).Value = subfolder.Name
+        row.Range(2).Value = file.Name
+        row.Range(3).Value = file.DateCreated
+        row.Range(4).Value = file.DateLastModified
+    Next file
+    
+    If tbl.ListRows.Count = 1 Then ' Verbinden der Zellen für den Ordnername, wenn nur eine Zeile vorhanden ist
+        tbl.Range(1, 1).MergeArea.Value = subfolder.Name
+    End If
+Next subfolder
+
 End Sub
